@@ -161,7 +161,6 @@ public class Server {
         frame.setVisible(true);
     }
 
-
     public void start() {
         mConnectionListener = new ConnectionListener(this);
         mConnectionListener.start();

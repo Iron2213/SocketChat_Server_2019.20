@@ -5,7 +5,6 @@ public class ConnectedClient {
     public void setUsername(String user) {
         mUser = user;
     }
-
     
     public String getUsername() {
         return mUser;
