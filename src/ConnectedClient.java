@@ -6,6 +6,7 @@ public class ConnectedClient {
         mUser = user;
     }
 
+    
     public String getUsername() {
         return mUser;
     }
