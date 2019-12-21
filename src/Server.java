@@ -1,37 +1,49 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class Server {
     private JTextArea mMainChat;
     private JTextArea mInputArea;
     private JButton mBtnSend;
+    private JList mUsersList;
+
+    private ConnectionListener mConnectionListener;
+
+    private DefaultListModel<ConnectedClient> mUsers;
 
     private final int GAP = 10;
     private final int WIDTH = 80;
     private final int HEIGHT = 60;
 
     public Server() {
-
         Color darkIntensity_1 = new Color(66, 66, 66);
         Color darkIntensity_2 = new Color(48, 48, 48);
         Color darkIntensity_3 = new Color(33, 33, 33);
         Color darkIntensity_4 = new Color(0, 0, 0);
 
         //
-        JPanel mLiveChatPanel = new JPanel();
-        mLiveChatPanel.setBackground(darkIntensity_2);
+        mUsers = new DefaultListModel<ConnectedClient>();
 
         //
-        GroupLayout mGroupLayout = new GroupLayout(mLiveChatPanel);
-        mLiveChatPanel.setLayout(mGroupLayout);
+        mUsersList = new JList(mUsers);
 
         //
-        JPanel mAdminControls = new JPanel();
-        mAdminControls.setBackground(darkIntensity_2);
+        JPanel liveChatPanel = new JPanel();
+        liveChatPanel.setBackground(darkIntensity_2);
 
         //
-        JLabel mTopLabel = new JLabel("Live chat");
-        mTopLabel.setForeground(Color.white);
+        GroupLayout groupLayout = new GroupLayout(liveChatPanel);
+        liveChatPanel.setLayout(groupLayout);
+
+        //
+        JPanel adminControls = new JPanel();
+        adminControls.setBackground(darkIntensity_2);
+
+        //
+        JLabel topLabel = new JLabel("Live chat");
+        topLabel.setForeground(Color.white);
 
         //
         mBtnSend = new JButton("Send");
@@ -39,6 +51,13 @@ public class Server {
         mBtnSend.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
         mBtnSend.setForeground(Color.white);
         mBtnSend.setFocusPainted(false);
+        mBtnSend.setEnabled(false);
+        mBtnSend.addActionListener(actionEvent -> {
+            sendToAllClients("SERVER", mInputArea.getText());
+            appendLiveChatText("You", mInputArea.getText());
+            mInputArea.setText("");
+            mBtnSend.setEnabled(false);
+        });
 
         //
         mMainChat = new JTextArea();
@@ -53,69 +72,124 @@ public class Server {
         mInputArea.setForeground(Color.white);
         mInputArea.setLineWrap(true);
         mInputArea.setWrapStyleWord(true);
+        mInputArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                checkText();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                checkText();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                checkText();
+            }
+
+            public void checkText() {
+                if (!mInputArea.getText().trim().equals("")) {
+                    if (!mBtnSend.isEnabled()) {
+                        mBtnSend.setEnabled(true);
+                    }
+                }
+                else {
+                    if (mBtnSend.isEnabled()) {
+                        mBtnSend.setEnabled(false);
+                    }
+                }
+            }
+        });
 
         //
-        JScrollPane mScrollPane = new JScrollPane(mMainChat, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        mScrollPane.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
+        JScrollPane scrollPane = new JScrollPane(mMainChat, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
-        JSeparator mSeparator = new JSeparator();
-        mSeparator.setBackground(darkIntensity_1);
-        mSeparator.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
+        JSeparator separator = new JSeparator();
+        separator.setBackground(darkIntensity_1);
+        separator.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
-        mGroupLayout.setHorizontalGroup(mGroupLayout.createParallelGroup()
-                .addGroup(mGroupLayout.createSequentialGroup()
+        groupLayout.setHorizontalGroup(groupLayout.createParallelGroup()
+                .addGroup(groupLayout.createSequentialGroup()
                         .addGap(GAP)
-                        .addComponent(mTopLabel))
-                .addGroup(mGroupLayout.createSequentialGroup()
+                        .addComponent(topLabel))
+                .addGroup(groupLayout.createSequentialGroup()
                         .addGap(GAP)
-                        .addComponent(mScrollPane)
+                        .addComponent(scrollPane)
                         .addGap(GAP))
-                .addComponent(mSeparator)
-                .addGroup(mGroupLayout.createSequentialGroup()
+                .addComponent(separator)
+                .addGroup(groupLayout.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(mInputArea, 100, 100, Short.MAX_VALUE)
                         .addGap(GAP)
                         .addComponent(mBtnSend, WIDTH, WIDTH, WIDTH)
                         .addGap(GAP))
         );
-        mGroupLayout.setVerticalGroup(mGroupLayout.createSequentialGroup()
+        groupLayout.setVerticalGroup(groupLayout.createSequentialGroup()
                 .addGap(GAP)
-                .addComponent(mTopLabel)
+                .addComponent(topLabel)
                 .addGap(GAP)
-                .addComponent(mScrollPane)
+                .addComponent(scrollPane)
                 .addGap(GAP)
-                .addComponent(mSeparator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(separator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(GAP)
-                .addGroup(mGroupLayout.createParallelGroup()
+                .addGroup(groupLayout.createParallelGroup()
                         .addComponent(mInputArea, HEIGHT, HEIGHT, HEIGHT)
                         .addComponent(mBtnSend, HEIGHT, HEIGHT, HEIGHT))
                 .addGap(GAP)
         );
 
+        //
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setBackground(darkIntensity_3);
+        tabbedPane.setForeground(Color.white);
+        tabbedPane.setBorder(BorderFactory.createLineBorder(darkIntensity_2));
+        tabbedPane.addTab("Live chat", liveChatPanel);
+        tabbedPane.addTab("Admin controls", adminControls);
 
         //
-        JTabbedPane mTabbedPane = new JTabbedPane();
-        mTabbedPane.setBackground(darkIntensity_3);
-        mTabbedPane.setForeground(Color.white);
-        mTabbedPane.setBorder(BorderFactory.createLineBorder(darkIntensity_2));
-        mTabbedPane.addTab("Live chat", mLiveChatPanel);
-        mTabbedPane.addTab("Admin controls", mAdminControls);
-
         JFrame frame = new JFrame("Server");
         frame.setPreferredSize(new Dimension(500, 500));
         frame.setResizable(true);
         frame.setLayout(new BorderLayout());
-        frame.add(mTabbedPane, BorderLayout.CENTER);
+        frame.add(tabbedPane, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+    }
 
+    public void start() {
+        mConnectionListener = new ConnectionListener(this);
+        mConnectionListener.start();
     }
 
     public void appendLiveChatText(String username, String text) {
         String newText = String.format("<%s>: %s\n", username, text);
         mMainChat.append(newText);
+        mMainChat.setCaretPosition(mMainChat.getDocument().getLength());
+    }
+
+    public void addConnectedClient(ConnectedClient connectedClient) {
+        mUsers.addElement(connectedClient);
+    }
+
+    public void removeConnectedClient(ConnectedClient connectedClient) {
+        mUsers.removeElement(connectedClient);
+    }
+
+    public void sendToAllClients(String user, String text, ConnectedClient client) {
+        for (int i = 0; i < mUsers.size(); i++) {
+            if (mUsers.elementAt(i) != client)
+                mUsers.elementAt(i).getThread().sendToClient(user, text);
+        }
+    }
+
+    public void sendToAllClients(String user, String text) {
+        for (int i = 0; i < mUsers.size(); i++) {
+            mUsers.elementAt(i).getThread().sendToClient(user, text);
+        }
     }
 }
