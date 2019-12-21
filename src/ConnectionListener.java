@@ -78,7 +78,6 @@ public class ConnectionListener extends Thread {
         @Override
         public void run() {
             String text;
-
             while (true) { // TODO: temp
                 try {
                     text = mInputStream.readUTF();
