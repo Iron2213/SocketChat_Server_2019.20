@@ -17,5 +17,4 @@ public class ConnectedClient {
     public ConnectionListener.ClientThread getThread() {
         return mThread;
     }
-
 }

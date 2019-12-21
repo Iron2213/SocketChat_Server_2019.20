@@ -60,7 +60,7 @@ public class ConnectionListener extends Thread {
                 // TODO:
                 System.out.println("ClientThread(): " + ex.getMessage());
             }
-
+            
             mCurrentClient = new ConnectedClient();
 
             mServer.addConnectedClient(mCurrentClient);
