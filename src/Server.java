@@ -48,11 +48,13 @@ public class Server {
         GroupLayout layoutAdminControls = new GroupLayout(adminControls);
         adminControls.setLayout(layoutAdminControls);
 
-        // Top text label
-        JLabel topLabel = new JLabel("Live chat");
-        topLabel.setForeground(Color.white);
+        // LiveChat top text label
+        JLabel liveChatTopLabel = new JLabel("Live chat");
+        liveChatTopLabel.setForeground(Color.white);
 
-        // JList that shows currently connected users
+        // AdminControls top text label
+        JLabel adminControlsTopLabel = new JLabel("Connected users");
+        adminControlsTopLabel.setForeground(Color.white);
 
         // Kick button
         JButton btnKick = new JButton("Kick");
@@ -64,7 +66,7 @@ public class Server {
         btnKick.addActionListener(actionEvent -> {
             if (mSelectedID > -1) {
                 for (ConnectedClient a : mUsers) {
-                    if(a.getID() == mSelectedID) {
+                    if (a.getID() == mSelectedID) {
                         a.getThread().kickClient();
                         break;
                     }
@@ -80,12 +82,15 @@ public class Server {
         mBtnSend.setFocusPainted(false);
         mBtnSend.setEnabled(false);
         mBtnSend.addActionListener(actionEvent -> {
-            sendToAllClients("SERVER", mInputArea.getText());
-            appendLiveChatText("You", mInputArea.getText());
+            String text = mInputArea.getText();
+            System.out.println(text);
+            sendToAllClients("SERVER", text);
+            appendLiveChatText("You", text);
             mInputArea.setText("");
             mBtnSend.setEnabled(false);
         });
 
+        // JList that shows currently connected users
         mUsersList = new JList(mUsersNames);
         mUsersList.setBackground(darkIntensity_1);
         mUsersList.setForeground(Color.white);
@@ -119,6 +124,7 @@ public class Server {
         mLiveChat.setLineWrap(true);
         mLiveChat.setWrapStyleWord(true);
         mLiveChat.setFont(new Font("Arial", Font.PLAIN, 15));
+        mLiveChat.setEditable(false);
 
         // Text area for the users input
         mInputArea = new JTextArea();
@@ -161,20 +167,28 @@ public class Server {
         scrollPane.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
-        JSeparator separator = new JSeparator();
-        separator.setBackground(darkIntensity_1);
-        separator.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
+        JSeparator separator1 = new JSeparator();
+        separator1.setBackground(darkIntensity_1);
+        separator1.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
+
+        //
+        JSeparator separator2 = new JSeparator();
+        separator2.setBackground(darkIntensity_1);
+        separator2.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
         layoutLiveChat.setHorizontalGroup(layoutLiveChat.createParallelGroup()
                 .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
-                        .addComponent(topLabel))
+                        .addComponent(adminControlsTopLabel))
                 .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(scrollPane)
                         .addGap(GAP))
-                .addComponent(separator)
+                .addGroup(layoutLiveChat.createSequentialGroup()
+                        .addGap(GAP)
+                        .addComponent(separator1)
+                        .addGap(GAP))
                 .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(mInputArea, 100, 100, Short.MAX_VALUE)
@@ -184,11 +198,11 @@ public class Server {
         );
         layoutLiveChat.setVerticalGroup(layoutLiveChat.createSequentialGroup()
                 .addGap(GAP)
-                .addComponent(topLabel)
+                .addComponent(adminControlsTopLabel)
                 .addGap(GAP)
                 .addComponent(scrollPane)
                 .addGap(GAP)
-                .addComponent(separator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(separator1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(GAP)
                 .addGroup(layoutLiveChat.createParallelGroup()
                         .addComponent(mInputArea, HEIGHT, HEIGHT, HEIGHT)
@@ -200,7 +214,15 @@ public class Server {
         layoutAdminControls.setHorizontalGroup(layoutAdminControls.createParallelGroup()
                 .addGroup(layoutAdminControls.createSequentialGroup()
                         .addGap(GAP)
+                        .addComponent(adminControlsTopLabel)
+                        .addGap(GAP))
+                .addGroup(layoutAdminControls.createSequentialGroup()
+                        .addGap(GAP)
                         .addComponent(mUsersList, 100, 100, Short.MAX_VALUE)
+                        .addGap(GAP))
+                .addGroup(layoutAdminControls.createSequentialGroup()
+                        .addGap(GAP)
+                        .addComponent(separator2)
                         .addGap(GAP))
                 .addGroup(layoutAdminControls.createSequentialGroup()
                         .addGap(GAP)
@@ -209,7 +231,11 @@ public class Server {
         );
         layoutAdminControls.setVerticalGroup(layoutAdminControls.createSequentialGroup()
                 .addGap(GAP)
+                .addComponent(adminControlsTopLabel)
+                .addGap(GAP)
                 .addComponent(mUsersList, 100, 100, Short.MAX_VALUE)
+                .addGap(GAP)
+                .addComponent(separator2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(GAP)
                 .addComponent(btnKick, HEIGHT, HEIGHT, HEIGHT)
                 .addGap(GAP)
