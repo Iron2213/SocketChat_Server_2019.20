@@ -17,7 +17,8 @@ public class ConnectionListener extends Thread {
         try {
             mServerSocket = new ServerSocket(PORT);
         }
-        catch (Exception e) {
+        catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -26,7 +27,6 @@ public class ConnectionListener extends Thread {
         while (!mServerSocket.isClosed()) {
             try {
                 Socket client = mServerSocket.accept();
-
                 new ClientThread(client).start();
             }
             catch (Exception e) {
@@ -36,6 +36,9 @@ public class ConnectionListener extends Thread {
         }
     }
 
+    /**
+     * This method stops the SocketServer and by so any further client connection
+     */
     public void stopServer() {
         try {
             mServerSocket.close();
@@ -50,8 +53,11 @@ public class ConnectionListener extends Thread {
         private DataInputStream mInputStream;
         private DataOutputStream mOutputStream;
         private ConnectedClient mCurrentClient;
+        private Socket mClientSocket;
+        private String mMsg = " left the chat";
 
         public ClientThread(Socket clientSocket) {
+            mClientSocket = clientSocket;
             try {
                 mInputStream = new DataInputStream(clientSocket.getInputStream());
                 mOutputStream = new DataOutputStream(clientSocket.getOutputStream());
@@ -60,14 +66,17 @@ public class ConnectionListener extends Thread {
                 // TODO:
                 System.out.println("ClientThread(): " + ex.getMessage());
             }
-            
-            mCurrentClient = new ConnectedClient();
 
-            mServer.addConnectedClient(mCurrentClient);
+            mCurrentClient = new ConnectedClient();
 
             try {
                 mCurrentClient.setUsername(mInputStream.readUTF());
                 mCurrentClient.setThread(this);
+
+                mServer.addConnectedClient(mCurrentClient);
+
+                mServer.sendToAllClients("SERVER", mCurrentClient.getUsername() + " joined the chat", mCurrentClient);
+                mServer.appendLiveChatText("You", mCurrentClient.getUsername() + " joined the chat");
             }
             catch (IOException ex) {
                 // TODO:
@@ -78,7 +87,8 @@ public class ConnectionListener extends Thread {
         @Override
         public void run() {
             String text;
-            while (true) { // TODO: temp
+
+            while (!mClientSocket.isClosed()) {
                 try {
                     text = mInputStream.readUTF();
 
@@ -89,14 +99,36 @@ public class ConnectionListener extends Thread {
                     // TODO:
                     System.out.println("ClientThread.run(): " + ex.getMessage());
                     mServer.removeConnectedClient(mCurrentClient);
+
                     mCurrentClient.setThread(null);
-                    mServer.appendLiveChatText("You", mCurrentClient.getUsername() + " left the chat");
-                    mServer.sendToAllClients("SERVER", mCurrentClient.getUsername() + " left the chat");
+
+                    mServer.appendLiveChatText("You", mCurrentClient.getUsername() + mMsg);
+                    mServer.sendToAllClients("SERVER", mCurrentClient.getUsername() + mMsg);
                     break;
                 }
             }
         }
 
+        /**
+         * This methods stop every connection with the current client
+         */
+        public void kickClient() {
+            try {
+                mClientSocket.close();
+
+                mMsg = " have been kicked from the chat";
+            }
+            catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+
+        /**
+         * This method sends a message to the current client
+         *
+         * @param user The user that sent the message
+         * @param text The message to send
+         */
         public void sendToClient(String user, String text) {
             try {
                 mOutputStream.writeUTF(user);

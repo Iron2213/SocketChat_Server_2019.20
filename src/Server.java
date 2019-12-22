@@ -2,16 +2,21 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server {
-    private JTextArea mMainChat;
+    private JTextArea mLiveChat;
     private JTextArea mInputArea;
     private JButton mBtnSend;
     private JList mUsersList;
 
     private ConnectionListener mConnectionListener;
 
-    private DefaultListModel<ConnectedClient> mUsers;
+    private List<ConnectedClient> mUsers;
+    private DefaultListModel<String> mUsersNames;
+
+    private int mSelectedID = -1;
 
     private final int GAP = 10;
     private final int WIDTH = 80;
@@ -23,29 +28,51 @@ public class Server {
         Color darkIntensity_3 = new Color(33, 33, 33);
         Color darkIntensity_4 = new Color(0, 0, 0);
 
-        //
-        mUsers = new DefaultListModel<ConnectedClient>();
+        // Arrays/Lists
+        mUsers = new ArrayList<>();
+        mUsersNames = new DefaultListModel<>();
 
-        //
-        mUsersList = new JList(mUsers);
-
-        //
+        // LiveChat panel
         JPanel liveChatPanel = new JPanel();
         liveChatPanel.setBackground(darkIntensity_2);
 
-        //
-        GroupLayout groupLayout = new GroupLayout(liveChatPanel);
-        liveChatPanel.setLayout(groupLayout);
+        // Layout for the LiveChat panel
+        GroupLayout layoutLiveChat = new GroupLayout(liveChatPanel);
+        liveChatPanel.setLayout(layoutLiveChat);
 
-        //
+        // AdminControls panel
         JPanel adminControls = new JPanel();
         adminControls.setBackground(darkIntensity_2);
 
-        //
+        // Layout for the AdminControls panel
+        GroupLayout layoutAdminControls = new GroupLayout(adminControls);
+        adminControls.setLayout(layoutAdminControls);
+
+        // Top text label
         JLabel topLabel = new JLabel("Live chat");
         topLabel.setForeground(Color.white);
 
-        //
+        // JList that shows currently connected users
+
+        // Kick button
+        JButton btnKick = new JButton("Kick");
+        btnKick.setBackground(darkIntensity_3);
+        btnKick.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
+        btnKick.setForeground(Color.white);
+        btnKick.setFocusPainted(false);
+        btnKick.setEnabled(false);
+        btnKick.addActionListener(actionEvent -> {
+            if (mSelectedID > -1) {
+                for (ConnectedClient a : mUsers) {
+                    if(a.getID() == mSelectedID) {
+                        a.getThread().kickClient();
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Send button
         mBtnSend = new JButton("Send");
         mBtnSend.setBackground(darkIntensity_3);
         mBtnSend.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
@@ -59,14 +86,41 @@ public class Server {
             mBtnSend.setEnabled(false);
         });
 
-        //
-        mMainChat = new JTextArea();
-        mMainChat.setBackground(darkIntensity_1);
-        mMainChat.setForeground(Color.white);
-        mMainChat.setLineWrap(true);
-        mMainChat.setWrapStyleWord(true);
+        mUsersList = new JList(mUsersNames);
+        mUsersList.setBackground(darkIntensity_1);
+        mUsersList.setForeground(Color.white);
+        mUsersList.setFont(new Font("Arial", Font.BOLD, 20));
+        mUsersList.addListSelectionListener(listSelectionEvent -> {
 
-        //
+            if (listSelectionEvent.getValueIsAdjusting()) {
+                btnKick.setEnabled(true);
+                String value = mUsersList.getSelectedValue().toString();
+
+                String ID = "";
+
+                for (int i = 2; i < value.length(); i++) {
+                    if (value.charAt(i) != ' ') {
+                        ID += value.charAt(i);
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                mSelectedID = Integer.parseInt(ID);
+            }
+
+        });
+
+        // Main text area that shows the live chat
+        mLiveChat = new JTextArea();
+        mLiveChat.setBackground(darkIntensity_1);
+        mLiveChat.setForeground(Color.white);
+        mLiveChat.setLineWrap(true);
+        mLiveChat.setWrapStyleWord(true);
+        mLiveChat.setFont(new Font("Arial", Font.PLAIN, 15));
+
+        // Text area for the users input
         mInputArea = new JTextArea();
         mInputArea.setBackground(darkIntensity_1);
         mInputArea.setForeground(Color.white);
@@ -103,7 +157,7 @@ public class Server {
         });
 
         //
-        JScrollPane scrollPane = new JScrollPane(mMainChat, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(mLiveChat, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
@@ -112,23 +166,23 @@ public class Server {
         separator.setBorder(BorderFactory.createLineBorder(darkIntensity_1, 1));
 
         //
-        groupLayout.setHorizontalGroup(groupLayout.createParallelGroup()
-                .addGroup(groupLayout.createSequentialGroup()
+        layoutLiveChat.setHorizontalGroup(layoutLiveChat.createParallelGroup()
+                .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(topLabel))
-                .addGroup(groupLayout.createSequentialGroup()
+                .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(scrollPane)
                         .addGap(GAP))
                 .addComponent(separator)
-                .addGroup(groupLayout.createSequentialGroup()
+                .addGroup(layoutLiveChat.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(mInputArea, 100, 100, Short.MAX_VALUE)
                         .addGap(GAP)
                         .addComponent(mBtnSend, WIDTH, WIDTH, WIDTH)
                         .addGap(GAP))
         );
-        groupLayout.setVerticalGroup(groupLayout.createSequentialGroup()
+        layoutLiveChat.setVerticalGroup(layoutLiveChat.createSequentialGroup()
                 .addGap(GAP)
                 .addComponent(topLabel)
                 .addGap(GAP)
@@ -136,9 +190,28 @@ public class Server {
                 .addGap(GAP)
                 .addComponent(separator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(GAP)
-                .addGroup(groupLayout.createParallelGroup()
+                .addGroup(layoutLiveChat.createParallelGroup()
                         .addComponent(mInputArea, HEIGHT, HEIGHT, HEIGHT)
                         .addComponent(mBtnSend, HEIGHT, HEIGHT, HEIGHT))
+                .addGap(GAP)
+        );
+
+        //
+        layoutAdminControls.setHorizontalGroup(layoutAdminControls.createParallelGroup()
+                .addGroup(layoutAdminControls.createSequentialGroup()
+                        .addGap(GAP)
+                        .addComponent(mUsersList, 100, 100, Short.MAX_VALUE)
+                        .addGap(GAP))
+                .addGroup(layoutAdminControls.createSequentialGroup()
+                        .addGap(GAP)
+                        .addComponent(btnKick, WIDTH, WIDTH, WIDTH)
+                        .addGap(GAP))
+        );
+        layoutAdminControls.setVerticalGroup(layoutAdminControls.createSequentialGroup()
+                .addGap(GAP)
+                .addComponent(mUsersList, 100, 100, Short.MAX_VALUE)
+                .addGap(GAP)
+                .addComponent(btnKick, HEIGHT, HEIGHT, HEIGHT)
                 .addGap(GAP)
         );
 
@@ -161,35 +234,69 @@ public class Server {
         frame.setVisible(true);
     }
 
+    /**
+     * This method starts the thread that listens to client connection requests
+     */
     public void start() {
         mConnectionListener = new ConnectionListener(this);
         mConnectionListener.start();
     }
 
-    public void appendLiveChatText(String username, String text) {
-        String newText = String.format("<%s>: %s\n", username, text);
-        mMainChat.append(newText);
-        mMainChat.setCaretPosition(mMainChat.getDocument().getLength());
+    /**
+     * This method adds a message in the main chat
+     *
+     * @param user The user that sent the message
+     * @param text The text to add in the chat
+     */
+    public void appendLiveChatText(String user, String text) {
+        String newText = String.format("<%s>: %s\n", user, text);
+        mLiveChat.append(newText);
+        mLiveChat.setCaretPosition(mLiveChat.getDocument().getLength());
     }
 
+    /**
+     * This method adds a ConnectedClient item to the lists of currently connected users
+     *
+     * @param connectedClient The ConnectedClient item created by the thread that manages it
+     */
     public void addConnectedClient(ConnectedClient connectedClient) {
-        mUsers.addElement(connectedClient);
+        mUsers.add(connectedClient);
+        mUsersNames.addElement("> " + connectedClient.getID() + " - " + connectedClient.getUsername());
     }
 
+    /**
+     * This method removes the current ConnectedClient item from the connected users list
+     *
+     * @param connectedClient The item to remove from the list
+     */
     public void removeConnectedClient(ConnectedClient connectedClient) {
-        mUsers.removeElement(connectedClient);
+        mUsers.remove(connectedClient);
+        mUsersNames.removeElement("> " + connectedClient.getID() + " - " + connectedClient.getUsername());
     }
 
+    /**
+     * This method sends a message to every connected user except for the passed one
+     *
+     * @param user   The user that sent the message
+     * @param text   The message to send
+     * @param client The user that do not have to receive the message
+     */
     public void sendToAllClients(String user, String text, ConnectedClient client) {
-        for (int i = 0; i < mUsers.size(); i++) {
-            if (mUsers.elementAt(i) != client)
-                mUsers.elementAt(i).getThread().sendToClient(user, text);
+        for (ConnectedClient User : mUsers) {
+            if (User != client)
+                User.getThread().sendToClient(user, text);
         }
     }
 
+    /**
+     * This method sends a message to every connected user
+     *
+     * @param user The user that sent the message
+     * @param text The message to send
+     */
     public void sendToAllClients(String user, String text) {
-        for (int i = 0; i < mUsers.size(); i++) {
-            mUsers.elementAt(i).getThread().sendToClient(user, text);
+        for (ConnectedClient User : mUsers) {
+            User.getThread().sendToClient(user, text);
         }
     }
 }
