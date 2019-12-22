@@ -34,17 +34,18 @@ public class ConnectionListener extends Thread {
                 break;
             }
         }
+        return;
     }
 
     /**
-     * This method stops the SocketServer and by so any further client connection
+     * This method stops the ServerSocket and by so any further client connection
      */
-    public void stopServer() {
+    public void stopServerSocket() {
         try {
             mServerSocket.close();
         }
         catch (Exception e) {
-            System.out.println("stopServer(): " + e.getMessage());
+            System.out.println("stopServerSocket(): " + e.getMessage());
         }
     }
 

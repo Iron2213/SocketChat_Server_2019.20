@@ -8,7 +8,6 @@ import java.util.List;
 public class Server {
     private JTextArea mLiveChat;
     private JTextArea mInputArea;
-    private JButton mBtnSend;
     private JList mUsersList;
 
     private ConnectionListener mConnectionListener;
@@ -74,20 +73,47 @@ public class Server {
             }
         });
 
+        // Open server button
+        JButton btnOpenServer = new JButton("Open server");
+        btnOpenServer.setBackground(darkIntensity_3);
+        btnOpenServer.setForeground(Color.white);
+        btnOpenServer.setFocusPainted(false);
+        btnOpenServer.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
+        btnOpenServer.addActionListener(actionEvent -> {
+            if (!mConnectionListener.isAlive()) {
+                mConnectionListener = null;
+                appendLiveChatText("You", "The server have been open");
+                start();
+            }
+        });
+
+        // Close server button
+        JButton btnCloseServer = new JButton("Close server");
+        btnCloseServer.setBackground(darkIntensity_3);
+        btnCloseServer.setForeground(Color.white);
+        btnCloseServer.setFocusPainted(false);
+        btnCloseServer.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
+        btnCloseServer.addActionListener(actionEvent -> {
+            appendLiveChatText("You", "The server have been closed, any further connection requests will be ignored");
+            mConnectionListener.stopServerSocket();
+            kickAllClients();
+        });
+
+
         // Send button
-        mBtnSend = new JButton("Send");
-        mBtnSend.setBackground(darkIntensity_3);
-        mBtnSend.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
-        mBtnSend.setForeground(Color.white);
-        mBtnSend.setFocusPainted(false);
-        mBtnSend.setEnabled(false);
-        mBtnSend.addActionListener(actionEvent -> {
+        JButton btnSend = new JButton("Send");
+        btnSend.setBackground(darkIntensity_3);
+        btnSend.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
+        btnSend.setForeground(Color.white);
+        btnSend.setFocusPainted(false);
+        btnSend.setEnabled(false);
+        btnSend.addActionListener(actionEvent -> {
             String text = mInputArea.getText();
             System.out.println(text);
             sendToAllClients("SERVER", text);
             appendLiveChatText("You", text);
             mInputArea.setText("");
-            mBtnSend.setEnabled(false);
+            btnSend.setEnabled(false);
         });
 
         // JList that shows currently connected users
@@ -150,13 +176,13 @@ public class Server {
 
             public void checkText() {
                 if (!mInputArea.getText().trim().equals("")) {
-                    if (!mBtnSend.isEnabled()) {
-                        mBtnSend.setEnabled(true);
+                    if (!btnSend.isEnabled()) {
+                        btnSend.setEnabled(true);
                     }
                 }
                 else {
-                    if (mBtnSend.isEnabled()) {
-                        mBtnSend.setEnabled(false);
+                    if (btnSend.isEnabled()) {
+                        btnSend.setEnabled(false);
                     }
                 }
             }
@@ -193,7 +219,7 @@ public class Server {
                         .addGap(GAP)
                         .addComponent(mInputArea, 100, 100, Short.MAX_VALUE)
                         .addGap(GAP)
-                        .addComponent(mBtnSend, WIDTH, WIDTH, WIDTH)
+                        .addComponent(btnSend, WIDTH, WIDTH, WIDTH)
                         .addGap(GAP))
         );
         layoutLiveChat.setVerticalGroup(layoutLiveChat.createSequentialGroup()
@@ -206,7 +232,7 @@ public class Server {
                 .addGap(GAP)
                 .addGroup(layoutLiveChat.createParallelGroup()
                         .addComponent(mInputArea, HEIGHT, HEIGHT, HEIGHT)
-                        .addComponent(mBtnSend, HEIGHT, HEIGHT, HEIGHT))
+                        .addComponent(btnSend, HEIGHT, HEIGHT, HEIGHT))
                 .addGap(GAP)
         );
 
@@ -227,6 +253,10 @@ public class Server {
                 .addGroup(layoutAdminControls.createSequentialGroup()
                         .addGap(GAP)
                         .addComponent(btnKick, WIDTH, WIDTH, WIDTH)
+                        .addGap(GAP)
+                        .addComponent(btnOpenServer, WIDTH, WIDTH, WIDTH)
+                        .addGap(GAP)
+                        .addComponent(btnCloseServer, WIDTH, WIDTH, WIDTH)
                         .addGap(GAP))
         );
         layoutAdminControls.setVerticalGroup(layoutAdminControls.createSequentialGroup()
@@ -237,7 +267,12 @@ public class Server {
                 .addGap(GAP)
                 .addComponent(separator2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(GAP)
-                .addComponent(btnKick, HEIGHT, HEIGHT, HEIGHT)
+                .addGroup(layoutAdminControls.createParallelGroup()
+                        .addComponent(btnKick, HEIGHT, HEIGHT, HEIGHT)
+                        .addGap(GAP)
+                        .addComponent(btnOpenServer, HEIGHT, HEIGHT, HEIGHT)
+                        .addGap(GAP)
+                        .addComponent(btnCloseServer, HEIGHT, HEIGHT, HEIGHT))
                 .addGap(GAP)
         );
 
@@ -323,6 +358,15 @@ public class Server {
     public void sendToAllClients(String user, String text) {
         for (ConnectedClient User : mUsers) {
             User.getThread().sendToClient(user, text);
+        }
+    }
+
+    /**
+     * This methods disconnects all the clients currently connected
+     */
+    public void kickAllClients() {
+        for (ConnectedClient User : mUsers) {
+            User.getThread().kickClient();
         }
     }
 }
