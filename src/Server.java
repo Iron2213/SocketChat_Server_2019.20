@@ -67,6 +67,12 @@ public class Server {
                 for (ConnectedClient a : mUsers) {
                     if (a.getID() == mSelectedID) {
                         a.getThread().kickClient();
+                        removeConnectedClient(a);
+
+                        if(mUsersNames.size() < 1) {
+                            btnKick.setEnabled(false);
+                        }
+
                         break;
                     }
                 }
@@ -82,7 +88,7 @@ public class Server {
         btnOpenServer.addActionListener(actionEvent -> {
             if (!mConnectionListener.isAlive()) {
                 mConnectionListener = null;
-                appendLiveChatText("You", "The server have been open");
+                appendLiveChatText("You", "The server has been open");
                 start();
             }
         });
@@ -94,7 +100,7 @@ public class Server {
         btnCloseServer.setFocusPainted(false);
         btnCloseServer.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
         btnCloseServer.addActionListener(actionEvent -> {
-            appendLiveChatText("You", "The server have been closed, any further connection requests will be ignored");
+            appendLiveChatText("You", "The server has been closed, any further connection requests will be ignored");
             mConnectionListener.stopServerSocket();
             kickAllClients();
         });
@@ -310,7 +316,7 @@ public class Server {
      * @param text The text to add in the chat
      */
     public void appendLiveChatText(String user, String text) {
-        String newText = String.format("<%s>: %s\n", user, text);
+        String newText = String.format("[ %s ]: %s\n", user, text);
         mLiveChat.append(newText);
         mLiveChat.setCaretPosition(mLiveChat.getDocument().getLength());
     }

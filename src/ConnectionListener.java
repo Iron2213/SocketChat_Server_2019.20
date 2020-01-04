@@ -9,13 +9,11 @@ public class ConnectionListener extends Thread {
     private Server mServer;
     private ServerSocket mServerSocket;
 
-    private final int PORT = 6789;
-
     public ConnectionListener(Server server) {
         mServer = server;
 
         try {
-            mServerSocket = new ServerSocket(PORT);
+            mServerSocket = new ServerSocket(6789);
         }
         catch (Exception ex) {
             System.out.println(ex.getMessage());

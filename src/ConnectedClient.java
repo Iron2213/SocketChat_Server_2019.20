@@ -1,7 +1,7 @@
 public class ConnectedClient {
-    private static int NEXT_ID = 0;
+    private static long NEXT_ID = 0;
 
-    private int mID;
+    private long mID;
     private String mUser;
     private ConnectionListener.ClientThread mThread;
 
@@ -9,7 +9,7 @@ public class ConnectedClient {
         mID = NEXT_ID++;
     }
 
-    public int getID() {
+    public long getID() {
         return mID;
     }
 
