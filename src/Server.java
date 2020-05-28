@@ -105,7 +105,6 @@ public class Server {
 			mConnectionListener.stopServerSocket();
 		});
 
-
 		// Send button
 		JButton btnSend = new JButton("Send");
 		btnSend.setBackground(darkIntensity_3);
@@ -371,9 +370,7 @@ public class Server {
 	 * @param connectedClient The item to remove from the list
 	 */
 	public void removeConnectedClient(ConnectedClient connectedClient) {
-		int i = mUsersList.getSelectedIndex();
-
-		mUsersNames.removeElementAt(i);
+		mUsersNames.removeElementAt(mUsersList.getSelectedIndex());
 		mUsers.remove(connectedClient);
 		mUsersList.updateUI();
 	}

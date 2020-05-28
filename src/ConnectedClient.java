@@ -1,8 +1,6 @@
 import java.util.UUID;
 
 public class ConnectedClient {
-	private static long NEXT_ID = 0;
-
 	private UUID mID;
 	private String mUser;
 	private ConnectionListener.ClientThread mThread;
