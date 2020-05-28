@@ -8,10 +8,11 @@ public class ConnectionListener extends Thread {
 
 	private Server mServer;
 	private ServerSocket mServerSocket;
+	private boolean mServerStarted;
 
 	public ConnectionListener(Server server) {
 		mServer = server;
-
+		mServerStarted = false;
 		try {
 			mServerSocket = new ServerSocket(6789);
 		}
@@ -22,6 +23,8 @@ public class ConnectionListener extends Thread {
 
 	@Override
 	public void run() {
+		mServerStarted = true;
+
 		while (!mServerSocket.isClosed()) {
 			try {
 				Socket client = mServerSocket.accept();
@@ -42,10 +45,15 @@ public class ConnectionListener extends Thread {
 		try {
 			mServer.kickAllClients("The server has been closed");
 			mServerSocket.close();
+			mServerStarted = false;
 		}
 		catch (Exception e) {
 			System.out.println("stopServerSocket(): " + e.getMessage());
 		}
+	}
+
+	public boolean isStarted() {
+		return mServerStarted;
 	}
 
 	class ClientThread extends Thread {

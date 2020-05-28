@@ -1,15 +1,17 @@
+import java.util.UUID;
+
 public class ConnectedClient {
 	private static long NEXT_ID = 0;
 
-	private long mID;
+	private UUID mID;
 	private String mUser;
 	private ConnectionListener.ClientThread mThread;
 
 	public ConnectedClient() {
-		mID = NEXT_ID++;
+		mID = UUID.randomUUID();
 	}
 
-	public long getID() {
+	public UUID getID() {
 		return mID;
 	}
 

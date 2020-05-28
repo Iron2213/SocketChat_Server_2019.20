@@ -6,11 +6,12 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Server {
-	private final int GAP = 10;
-	private final int WIDTH = 80;
-	private final int HEIGHT = 60;
+	private static final int GAP = 10;
+	private static final int WIDTH = 80;
+	private static final int HEIGHT = 60;
 
 	private JTextArea mLiveChat;
 	private JTextArea mInputArea;
@@ -18,7 +19,7 @@ public class Server {
 	private ConnectionListener mConnectionListener;
 	private List<ConnectedClient> mUsers;
 	private DefaultListModel<String> mUsersNames;
-	private int mSelectedID = -1;
+	private UUID mSelectedID;
 
 	public Server() {
 		Color darkIntensity_1 = new Color(66, 66, 66);
@@ -62,7 +63,7 @@ public class Server {
 		btnKick.setFocusPainted(false);
 		btnKick.setEnabled(false);
 		btnKick.addActionListener(actionEvent -> {
-			if (mSelectedID > -1) {
+			if (mSelectedID != null) {
 				for (ConnectedClient User : mUsers) {
 					if (User.getID() == mSelectedID) {
 						User.getThread().kickClient();
@@ -85,7 +86,7 @@ public class Server {
 		btnOpenServer.setFocusPainted(false);
 		btnOpenServer.setBorder(BorderFactory.createLineBorder(darkIntensity_3, 1));
 		btnOpenServer.addActionListener(actionEvent -> {
-			if (!mConnectionListener.isAlive()) {
+			if (!mConnectionListener.isStarted()) {
 				mConnectionListener = null;
 				appendLiveChatText("You", "The server has been open");
 				start();
@@ -129,24 +130,14 @@ public class Server {
 		mUsersList.setFont(new Font("Arial", Font.BOLD, 20));
 		mUsersList.addListSelectionListener(listSelectionEvent -> {
 
-			if (listSelectionEvent.getValueIsAdjusting()) {
-				btnKick.setEnabled(true);
-				String value = mUsersList.getSelectedValue().toString();
-
-				String ID = "";
-
-				for (int i = 2; i < value.length(); i++) {
-					if (value.charAt(i) != ' ') {
-						ID += value.charAt(i);
-					}
-					else {
-						break;
-					}
+			if(!listSelectionEvent.getValueIsAdjusting()) {
+				int currentIndex = mUsersList.getSelectedIndex();
+				if (currentIndex > -1) {
+					btnKick.setEnabled(true);
+					ConnectedClient selectUser = mUsers.get(currentIndex);
+					mSelectedID = selectUser.getID();
 				}
-
-				mSelectedID = Integer.parseInt(ID);
 			}
-
 		});
 
 		// Main text area that shows the live chat
@@ -349,6 +340,7 @@ public class Server {
 	public void start() {
 		mConnectionListener = new ConnectionListener(this);
 		mConnectionListener.start();
+		appendLiveChatText("You", "The server has been open");
 	}
 
 	/**
@@ -370,7 +362,7 @@ public class Server {
 	 */
 	public void addConnectedClient(ConnectedClient connectedClient) {
 		mUsers.add(connectedClient);
-		mUsersNames.addElement("> " + connectedClient.getID() + " - " + connectedClient.getUsername());
+		mUsersNames.addElement("> " + mUsers.size() + " - " + connectedClient.getUsername());
 	}
 
 	/**
@@ -379,8 +371,11 @@ public class Server {
 	 * @param connectedClient The item to remove from the list
 	 */
 	public void removeConnectedClient(ConnectedClient connectedClient) {
+		int i = mUsersList.getSelectedIndex();
+
+		mUsersNames.removeElementAt(i);
 		mUsers.remove(connectedClient);
-		mUsersNames.removeElement("> " + connectedClient.getID() + " - " + connectedClient.getUsername());
+		mUsersList.updateUI();
 	}
 
 	/**
